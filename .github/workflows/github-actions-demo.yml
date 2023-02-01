@@ -1,31 +1,40 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
+name: PullRequest-Builder
+run-name: "Triggered by ${{ github.event_name }} event to ${{ github.ref }}. Author: ${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  # Needed for the 'trilom/file-changes-action' action
+  pull-requests: read
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
 jobs:
-  checkout:
+  PullRequest-Builder:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
     steps:
+      - run: echo "Runner=${{ runner.os }}, Repo=${{ github.repository }}, Branch=${{ github.ref }}, Workspace=${{ github.workspace }}"
       - name: Checkout code
         uses: actions/checkout@v3
-      - run: echo "Event     = ${{ github.event_name }}
-                   Runner    = ${{ runner.os }}
-                   Repo      = ${{ github.repository }}
-                   Branch    = ${{ github.ref }}
-                   Workspace = ${{ github.workspace }}
-                   Status    = ${{ job.status }}"
-
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [19.x]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+          node-version: 19.x
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build app
+        run: npm run build
       - run: echo "Build successful 🎉 🚀"
