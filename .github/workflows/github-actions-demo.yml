@@ -47,6 +47,8 @@ jobs:
     timeout-minutes: 5
     needs: PullRequest-Builder
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -61,7 +63,5 @@ jobs:
           context: .
           push: true
           tags: |
-            abidfs/nextjs-template:latest
-            abidfs/nextjs-template:1.0.0
             ghcr.io/abidfs/nextjs-template:latest
             ghcr.io/abidfs/nextjs-template:1.0.0
